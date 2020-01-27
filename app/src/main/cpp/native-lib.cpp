@@ -3,6 +3,10 @@
 #include "astra/astra.hpp"
 #include "astra_core/astra_core.hpp"
 #include "astra_core/capi/astra_host_events.h"
+#include <android/log.h>
+
+#define TAG "CCode"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    TAG, __VA_ARGS__)
 
 enum ColorMode
 {
@@ -21,6 +25,7 @@ public:
 
         int width = colorFrame.width();
         int height = colorFrame.height();
+        LOGD("Width: %d", width);
 
         const astra::RgbPixel *colorData = colorFrame.data();
 
@@ -36,9 +41,22 @@ Java_com_example_myapplication_MainActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
+    return env->NewStringUTF(hello.c_str());
 
-    astra_notify_resource_available("usb/0x2bc5/0608/001/031");
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_myapplication_MainActivity_setUsbNames(
+        JNIEnv *env,
+        jobject /* this */, jstring rgbUsbName, jstring depthUsbName) {
+    const char* rgbName = env->GetStringUTFChars(rgbUsbName, 0);
+    const char* depthName = env->GetStringUTFChars(depthUsbName, 0);
+    LOGD("RGB: %s", rgbName);
+    LOGD("Depth: %s", depthName);
+    LOGD("Creating astra");
+    astra_notify_resource_available(rgbName);
     astra::initialize();
+    LOGD("Astra initialized");
     astra::StreamSet streamSet;
     astra::StreamReader reader = streamSet.create_reader();
 
@@ -51,9 +69,7 @@ Java_com_example_myapplication_MainActivity_stringFromJNI(
 
 
     if (reader.has_new_frame()) {
-        hello = "Got a Frame";
+        LOGD("Got a Frame");
     }
-
-    return env->NewStringUTF(hello.c_str());
 
 }

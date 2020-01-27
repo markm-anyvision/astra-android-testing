@@ -15,7 +15,8 @@ import java.util.ArrayList
 
 private const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
 class MainActivity : AppCompatActivity() {
-
+    var rgbUsbName: String? = null
+    var depthUsbName: String? = null
     lateinit var manager: UsbManager
     val devices = ArrayList<UsbDevice>()
     private val usbReceiver = object : BroadcastReceiver() {
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
                             manager.requestPermission(deviceTmp, permissionIntent)
                         }
                         else {
+                            setUsbNames(rgbUsbName!!, depthUsbName!!)
                             Log.d("Test", "All permissions approved")
                         }
                     } else {
@@ -56,6 +58,16 @@ class MainActivity : AppCompatActivity() {
         deviceList.forEach {
             if(it.value.vendorId == 11205) {
                 devices.add(it.value)
+                if(it.value.productName?.contains("Depth") == true) {
+                    depthUsbName = it.value.deviceName
+                }
+                else {
+                    rgbUsbName = it.value.deviceName
+                }
+                Log.i("Test", "Device id: ${it.value.deviceId}")
+                Log.i("Test", "Device name: ${it.value.deviceName}")
+                Log.i("Test", "Product name: ${it.value.productName}")
+                Log.i("Test", "Product id: ${it.value.productId}")
             }
         }
         val permissionIntent = PendingIntent.getBroadcast(this@MainActivity, 0, Intent(ACTION_USB_PERMISSION), 0)
@@ -70,7 +82,8 @@ class MainActivity : AppCompatActivity() {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    external fun stringFromJNI(): String
+    private external fun stringFromJNI(): String
+    private external fun setUsbNames(rgbUsbName: String, depthUsbName: String)
 
 
     companion object {
