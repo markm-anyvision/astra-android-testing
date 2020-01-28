@@ -32,27 +32,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
     private val runnable = Runnable {
         try {
             openDepthStream()
-            /*val streamSet = StreamSet.open()
-            val reader = streamSet.createReader()
-            val depthStream = DepthStream.get(reader)
-            depthStream.mode = ImageStreamMode(0, 640, 400, 100, 30)
-            depthStream.registration = true
-            val frameListener = StreamReader.FrameListener {
-                    streamReader, frame ->
-                val df = DepthFrame.get(frame)
-                Log.i("Test", "Received frame")
-            }
-            reader.addFrameListener (frameListener)
-            depthStream.start()
-
-            while (!exit) {
-                Astra.update()
-                TimeUnit.MILLISECONDS.sleep(20L)
-            }
-            reader.removeFrameListener(frameListener)
-            depthStream.stop()
-            reader.destroy()
-            streamSet.close()*/
         }
         catch (e: Exception) {
 
