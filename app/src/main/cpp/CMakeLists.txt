@@ -9,8 +9,11 @@ cmake_minimum_required(VERSION 3.4.1)
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
-include_directories(/usr/include/astra)
+include_directories(/Users/alexvainshtein/Downloads/AstraSDK-v2.0.18-05cfa52534-20191108T074013Z-Linux/include)
+include_directories(~/Library/OpenCV-android-sdk-4.1.2/sdk/native/jni/include)
 
+add_library(lib_opencv SHARED IMPORTED)
+set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/armeabi-v7a/libopencv_java4.so)
 add_library(libastra_android_bridge SHARED IMPORTED)
 set_target_properties(libastra_android_bridge PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/libastra_android_bridge.so)
 add_library(libastra_core_api SHARED IMPORTED)
@@ -57,11 +60,9 @@ find_library( # Sets the name of the path variable.
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
+
 target_link_libraries( # Specifies the target library.
         native-lib
-
-        # Links the target library to the log library
-        # included in the NDK.
         ${log-lib}
         libastra_android_bridge
         libastra_core_api
@@ -71,8 +72,6 @@ target_link_libraries( # Specifies the target library.
         libOniFile
         libOpenNI2
         libopenni_sensor
-        #libOrbbecBodyTracking
-        #liborbbec_hand
         liborbbec
-        #liborbbec_xs
-        libusb)
+        libusb
+        lib_opencv)

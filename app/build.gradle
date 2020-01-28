@@ -9,7 +9,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.example.myapplication"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -17,7 +17,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ""
-                abiFilters 'armeabi-v7a'
+                arguments "-DANDROID_STL=c++_shared"
             }
         }
         ndk {
@@ -33,7 +33,7 @@ android {
     sourceSets {
         main {
             // let gradle pack the shared library into apk
-            jniLibs.srcDirs = ['src/main/jniLibs']
+            jniLibs.srcDirs 'src/main/jniLibs'
         }
     }
     externalNativeBuild {
@@ -53,4 +53,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation(name: 'astra_sdk_v2.0.18', ext: 'aar')
 }
