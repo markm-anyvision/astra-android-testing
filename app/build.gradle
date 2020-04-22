@@ -9,7 +9,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.example.myapplication"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -17,11 +17,13 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ""
-                arguments "-DANDROID_STL=c++_shared"
+                arguments "-DANDROID_TOOLCHAIN=clang",
+                        "-DANDROID_STL=c++_shared",
+                        "-DANDROID_PLATFORM=android-24"
             }
         }
         ndk {
-            abiFilters 'armeabi-v7a'
+            abiFilters 'arm64-v8a'
         }
     }
     buildTypes {
@@ -29,6 +31,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     sourceSets {
         main {
@@ -53,5 +59,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation(name: 'astra_sdk_v2.0.18', ext: 'aar')
+    implementation(name: 'astra-android-release-v2.1.0-arm64-v8a', ext: 'aar')
+    /*implementation(name: 'libuvccamera-release', ext: 'aar')
+    implementation(name: 'usbCameraCommon-release', ext: 'aar')
+    implementation("com.serenegiant:common:2.12.4") {
+        exclude module: 'support-v4'
+    }*/
 }

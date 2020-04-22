@@ -11,6 +11,8 @@ import android.util.Log
 import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import android.os.Handler
+import android.view.Surface
 import com.orbbec.astra.*
 import com.orbbec.astra.android.AstraAndroidContext
 import com.orbbec.astra.android.AstraDeviceManagerListener
@@ -31,7 +33,8 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
 
     private val runnable = Runnable {
         try {
-            openDepthStream()
+            //openDepthStream()
+            openRGBStream()
         }
         catch (e: Exception) {
 
@@ -108,6 +111,12 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
         aac = AstraAndroidContext(applicationContext, this)
         aac?.initialize()
         aac?.openAllDevices()
+
+
+    }
+
+    override fun onStart() {
+        super.onStart()
     }
 
     override fun onStop() {
@@ -127,6 +136,7 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
      */
     private external fun stringFromJNI(): String
     private external fun openDepthStream()
+    private external fun openRGBStream()
     private external fun stopDepthStream()
 
 
