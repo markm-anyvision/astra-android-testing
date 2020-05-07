@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
 
     private val runnable = Runnable {
         try {
-            openRGBStream()
+            openAstraStream()
         }
         catch (e: Exception) {
 
@@ -26,7 +26,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         // Example of a call to a native method
-        sample_text.text = stringFromJNI()
         aac = AstraAndroidContext(applicationContext, this)
         aac?.initialize()
         aac?.openAllDevices()
@@ -48,9 +47,7 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    private external fun stringFromJNI(): String
-    private external fun openDepthStream()
-    private external fun openRGBStream()
+    private external fun openAstraStream()
     private external fun stopDepthStream()
 
 

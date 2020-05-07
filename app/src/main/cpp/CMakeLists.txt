@@ -10,10 +10,10 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 include_directories(/Users/alexvainshtein/Downloads/AstraSDK-v2.1.0-9bced77c41-Linux-arm/AstraSDK-v2.1.0-9bced77c41-20200316T022223Z-Linux-aarch64/include)
-#include_directories(~/Library/OpenCV-android-sdk-4.1.2/sdk/native/jni/include)
+include_directories(~/Library/OpenCV-android-sdk-4.1.2/sdk/native/jni/include)
 
-#add_library(lib_opencv SHARED IMPORTED)
-#set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/armeabi-v7a/libopencv_java4.so)
+add_library(lib_opencv SHARED IMPORTED)
+set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libopencv_java4.so)
 add_library(libastra_android_bridge SHARED IMPORTED)
 set_target_properties(libastra_android_bridge PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/libastra_android_bridge.so)
 add_library(libastra_core_api SHARED IMPORTED)
@@ -89,4 +89,5 @@ target_link_libraries( # Specifies the target library.
         libopenni_sensor
         liborbbec
         libusb
+        lib_opencv
         ${android-lib} ${gl-lib})
