@@ -9,11 +9,21 @@ cmake_minimum_required(VERSION 3.4.1)
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
+set(GSTREAMER_ROOT ~/Android/gstreamer/gstreamer-1.16.2/arm64)
+
+include_directories(
+        ${GSTREAMER_ROOT}/include/gstreamer-1.0
+        ${GSTREAMER_ROOT}/include/glib-2.0
+        ${GSTREAMER_ROOT}/lib/glib-2.0/include
+)
+
 include_directories(/Users/alexvainshtein/Downloads/AstraSDK-v2.1.0-9bced77c41-Linux-arm/AstraSDK-v2.1.0-9bced77c41-20200316T022223Z-Linux-aarch64/include)
 include_directories(~/Library/OpenCV-android-sdk-4.1.2/sdk/native/jni/include)
 
 add_library(lib_opencv SHARED IMPORTED)
 set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libopencv_java4.so)
+add_library(libgstreamer_android SHARED IMPORTED)
+set_target_properties(libgstreamer_android PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libgstreamer_android.so)
 add_library(libastra_android_bridge SHARED IMPORTED)
 set_target_properties(libastra_android_bridge PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/libastra_android_bridge.so)
 add_library(libastra_core_api SHARED IMPORTED)
@@ -90,4 +100,5 @@ target_link_libraries( # Specifies the target library.
         liborbbec
         libusb
         lib_opencv
+        libgstreamer_android
         ${android-lib} ${gl-lib})
