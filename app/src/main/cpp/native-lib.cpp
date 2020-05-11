@@ -47,6 +47,7 @@ typedef struct _CustomData {
     gboolean initialized;   /* To avoid informing the UI multiple times about the initialization */
     GstElement *video_sink; /* The video sink element which receives VideoOverlay commands */
     GstElement *source_sink; /* The source element */
+    GstElement *videoconverter1;
     ANativeWindow *native_window; /* The Android native window where video will be rendered */
 } CustomData;
 
@@ -132,6 +133,7 @@ static void error_cb(GstBus *bus, GstMessage *message, CustomData *jni_data)
 
 /* Notify UI about pipeline state changes */
 static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+    LOGD("state_changed_cb");
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
     /* Only pay attention to messages coming from the pipeline, not its children */
@@ -145,6 +147,7 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 /* Check if all conditions are met to report GStreamer as initialized.
  * These conditions will change depending on the application */
 static void check_initialization_complete (CustomData *data) {
+    LOGD("check_initialization_complete");
     JNIEnv *env = get_jni_env ();
     if (!data->initialized && data->native_window && data->main_loop) {
         GST_DEBUG ("Initialization complete, notifying application. native_window:%p main_loop:%p", data->native_window, data->main_loop);
@@ -178,12 +181,13 @@ static void *app_function(void *userdata)
     context = g_main_context_new();
 
     gst_data->pipeline = gst_pipeline_new("detector_pipeline");
-    gst_data->source_sink = gst_element_factory_make("ahcsrc", "ahcsrc");
+    gst_data->videoconverter1 = gst_element_factory_make("videoconvert", "videoconvert1");
+    gst_data->source_sink = gst_element_factory_make("astrasrc", "astrasrc");
     if(gst_data->source_sink) {
-        LOGD("ahcsrc src is created");
+        LOGD("astrasrc src is created");
     }
     else {
-        LOGD("ahcsrc src not created");
+        LOGD("astrasrc src not created");
     }
     gst_data->video_sink = gst_element_factory_make("glimagesink", "vsink");
 
@@ -198,9 +202,11 @@ static void *app_function(void *userdata)
     gst_bin_add_many(GST_BIN(gst_data->pipeline),
                      gst_data->source_sink,
                      gst_data->video_sink,
+                     gst_data->videoconverter1,
                      NULL);
 
     gst_element_link_many(gst_data->source_sink,
+                          gst_data->videoconverter1,
                           gst_data->video_sink,
                           NULL);
 
@@ -251,6 +257,7 @@ static void *app_function(void *userdata)
     gst_element_set_state(gst_data->pipeline, GST_STATE_NULL);
     gst_object_unref(gst_data->source_sink);
     gst_object_unref(gst_data->video_sink);
+    gst_object_unref(gst_data->videoconverter1);
     gst_object_unref(gst_data->pipeline);
 
     return NULL;
@@ -442,10 +449,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_example_myapplication_MainActivity_startGstreamer(
         JNIEnv *env,
         jobject /* this */) {
-    char *version_utf8 = gst_version_string();
-    LOGD("Gstreamer version: %s", version_utf8);
-    //jstring version_jstring = env->NewStringUTF( version_utf8);
-    g_free (version_utf8);
+    astra::initialize();
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -454,9 +458,10 @@ Java_com_example_myapplication_MainActivity_openAstraStream(
         jobject /* this */) {
     isRunning = true;
     LOGD("Astra initialized");
+    LOGD("1");
     astra::StreamSet streamSet;
     astra::StreamReader reader= streamSet.create_reader();
-
+    LOGD("2");
     auto depthStream = reader.stream<astra::DepthStream>();
     astra::ImageStreamMode depthMode;
     depthMode.set_width(640);
@@ -465,18 +470,25 @@ Java_com_example_myapplication_MainActivity_openAstraStream(
     depthMode.set_fps(30);
     depthStream.set_mode(depthMode);
     depthStream.start();
-
+    LOGD("3");
     auto rgbStream = reader.stream<astra::ColorStream>();
     rgbStream.start();
-
+    LOGD("4");
     AstraFrameListener listener;
     reader.add_listener(listener);
-
+    LOGD("5");
     while (isRunning) {
+        if(reader.has_new_frame()) {
+            LOGD("New Frame");
+        }
+        else {
+            LOGD("No Frame");
+        }
         astra_update();
     }
     rgbStream.stop();
     depthStream.stop();
+    //astra::terminate();
     LOGD("RGB Stream stopped");
 }
 

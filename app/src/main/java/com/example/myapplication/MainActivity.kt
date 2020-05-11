@@ -19,29 +19,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     private var executor: ExecutorService? = null
 
     private val runnable = Runnable {
-        /*try {
-            try {
-                GStreamer.init(this)
-            } catch (e: Exception) {
-                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-                finish()
-            }
-            startGstreamer()
-            val sh = surfaceView.holder
-            sh.addCallback(this)
-            nativeInit();
-        }
-        catch (e: Exception) {
-
-        }*/
-    }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        // Example of a call to a native method
-        /*aac = AstraAndroidContext(applicationContext, this)
-        aac?.initialize()
-        aac?.openAllDevices()*/
         try {
             try {
                 GStreamer.init(this)
@@ -57,6 +34,31 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
         catch (e: Exception) {
 
         }
+        //openAstraStream()
+    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        // Example of a call to a native method
+        aac = AstraAndroidContext(applicationContext, this)
+        //startGstreamer()
+        aac?.initialize()
+        aac?.openAllDevices()
+        /*try {
+            try {
+                GStreamer.init(this)
+            } catch (e: Exception) {
+                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+                finish()
+            }
+            startGstreamer()
+            val sh = surfaceView.holder
+            sh.addCallback(this)
+            nativeInit();
+        }
+        catch (e: Exception) {
+
+        }*/
 
 
     }
@@ -101,8 +103,23 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     }
 
     override fun onOpenAllDevicesCompleted(p0: MutableIterable<UsbDevice>?) {
-        executor = Executors.newSingleThreadExecutor().apply {
+        /*executor = Executors.newSingleThreadExecutor().apply {
             execute(runnable)
+        }*/
+        try {
+            try {
+                GStreamer.init(this)
+            } catch (e: Exception) {
+                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+                finish()
+            }
+            startGstreamer()
+            val sh = surfaceView.holder
+            sh.addCallback(this)
+            nativeInit();
+        }
+        catch (e: Exception) {
+
         }
     }
 
@@ -137,4 +154,5 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     override fun surfaceCreated(p0: SurfaceHolder?) {
 
     }
+
 }
