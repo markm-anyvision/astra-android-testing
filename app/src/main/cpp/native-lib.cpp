@@ -327,7 +327,7 @@ static void *app_function(void *userdata)
 
 
     gst_element_link_many(gst_data->tee,
-                          gst_data->queue1,
+                          //gst_data->queue1,
                           gst_data->landmarksdetector,
                           gst_data->alignment,
                           gst_data->facefeatureextractor,
