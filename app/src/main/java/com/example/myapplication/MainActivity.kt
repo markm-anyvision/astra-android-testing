@@ -1,10 +1,14 @@
 package com.example.myapplication
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
 import android.view.SurfaceHolder
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.orbbec.astra.android.AstraAndroidContext
 import com.orbbec.astra.android.AstraDeviceManagerListener
 import kotlinx.android.synthetic.main.activity_main.*
@@ -12,11 +16,14 @@ import org.freedesktop.gstreamer.GStreamer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-
+private val REQUEST_CODE_PERMISSIONS = 10
+private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
 class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHolder.Callback {
     private var native_custom_data: Long = 0 //Used by native code to store private data
     private var aac: AstraAndroidContext? = null
     private var executor: ExecutorService? = null
+
+
 
     private val runnable = Runnable {
         try {
@@ -39,33 +46,27 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Example of a call to a native method
         aac = AstraAndroidContext(applicationContext, this)
-        //startGstreamer()
         aac?.initialize()
-        aac?.openAllDevices()
-        /*try {
-            try {
-                GStreamer.init(this)
-            } catch (e: Exception) {
-                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-                finish()
-            }
-            startGstreamer()
-            val sh = surfaceView.holder
-            sh.addCallback(this)
-            nativeInit();
+        if (allPermissionsGranted()) {
+            initAstra()
+        } else {
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
-        catch (e: Exception) {
+    }
 
-        }*/
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(
+            baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
 
-
+    private fun initAstra() {
+        aac?.openAllDevices()
     }
 
     override fun onStop() {
         super.onStop()
-        stopDepthStream()
     }
 
     override fun onDestroy() {
@@ -113,7 +114,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
                 Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
                 finish()
             }
-            startGstreamer()
             val sh = surfaceView.holder
             sh.addCallback(this)
             nativeInit();
@@ -142,17 +142,36 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     }
 
     override fun surfaceChanged(holder: SurfaceHolder?, p1: Int, p2: Int, p3: Int) {
-        holder?.let {
-            nativeSurfaceInit(it.surface)
+        runOnUiThread {
+            holder?.let {
+                nativeSurfaceInit(it.surface)
+            }
         }
     }
 
     override fun surfaceDestroyed(p0: SurfaceHolder?) {
-        nativeSurfaceFinalize()
+        runOnUiThread {
+            nativeSurfaceFinalize()
+        }
     }
 
     override fun surfaceCreated(p0: SurfaceHolder?) {
 
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String>, grantResults:
+        IntArray) {
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (allPermissionsGranted()) {
+                initAstra()
+            } else {
+                Toast.makeText(this,
+                    "Permissions not granted by the user.",
+                    Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
     }
 
 }

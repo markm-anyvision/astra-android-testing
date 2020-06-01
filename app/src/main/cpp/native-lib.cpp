@@ -49,6 +49,18 @@ typedef struct _CustomData {
     GstElement *source_sink; /* The source element */
     GstElement *videoconverter1;
     ANativeWindow *native_window; /* The Android native window where video will be rendered */
+    GstElement *facedetector;
+    GstElement *anvcvdraw;
+    GstElement *landmarksdetector;
+    GstElement *alignment;
+    GstElement *facefeatureextractor;
+    GstElement *appsink;
+    GstElement *fakesink;
+    GstElement *queue1;
+    GstElement *queue2;
+    GstElement *queue3;
+    GstElement *tee;
+    GstElement *liveness;
 } CustomData;
 
 /* These global variables cache values which are not changing during execution */
@@ -191,23 +203,145 @@ static void *app_function(void *userdata)
     }
     gst_data->video_sink = gst_element_factory_make("glimagesink", "vsink");
 
+    gst_data->facedetector = gst_element_factory_make("anvfdsnpe", "anvfdsnpe");
+    if(gst_data->facedetector) {
+        LOGD("facedetector is created");
+    }
+    else {
+        LOGD("facedetector not created");
+    }
+
+    gst_data->anvcvdraw = gst_element_factory_make("anvcvdraw", "anvcvdraw");
+    if(gst_data->anvcvdraw) {
+        LOGD("Draw src is created");
+    }
+    else {
+        LOGD("Draw src is not created");
+    }
+    gst_data->landmarksdetector =  gst_element_factory_make("anvldsnpe", "anvldsnpe");
+    if(gst_data->landmarksdetector) {
+        LOGD("Landmarks detector src is created");
+    }
+    else {
+        LOGD("Landmarks detector src is not created");
+    }
+
+    gst_data->alignment =  gst_element_factory_make("anvaligncv", "anvaligncv");
+    if(gst_data->alignment) {
+        LOGD("Alignment detector src is created");
+    }
+    else {
+        LOGD("Alignment detector src is not created");
+    }
+    gst_data->facefeatureextractor =  gst_element_factory_make("anvffesnpe", "anvffesnpe");
+    if(gst_data->facefeatureextractor) {
+        LOGD("Face feature extractor src is created");
+    }
+    else {
+        LOGD("Face feature extractor src is not created");
+    }
+
+    gst_data->tee = gst_element_factory_make("tee", "tee");
+    gst_data->queue1 = gst_element_factory_make("queue", "queue1");
+    if(gst_data->queue1) {
+        LOGD("Queue src is created");
+    }
+    else {
+        LOGD("Queue src is not created");
+    }
+    gst_data->queue2 = gst_element_factory_make("queue", "queue2");
+    gst_data->queue3 = gst_element_factory_make("queue", "queue3");
+
+    gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
+    if(gst_data->liveness) {
+        LOGD("Liveness src is created");
+    }
+    else {
+        LOGD("Liveness src is not created");
+    }
 
     g_object_set (gst_data->video_sink,
                   "sync", false,
                   NULL);
 
-    g_object_set(gst_data->video_sink, "rotate-method", 1, NULL);
+    g_object_set (gst_data->queue1,
+                  "max-size-buffers", 1,
+                  NULL);
+    g_object_set (gst_data->queue1,
+                  "leaky", 2,
+                  NULL);
+    g_object_set (gst_data->facedetector,
+                  "model", "/sdcard/Models/V6.1.0_face_det.dlc",
+                  NULL);
+    g_object_set (gst_data->facedetector,
+                  "min-obj-size", 48,
+                  NULL);
+
+    g_object_set (gst_data->liveness,
+                  "hog-file-path", "/sdcard/Models/hog.xml",
+                  NULL);
+    g_object_set (gst_data->liveness,
+                  "ann-file-path-prefix", "/sdcard/Models/ann",
+                  NULL);
+
+    g_object_set (gst_data->landmarksdetector,
+                  "model-global-path", "/sdcard/Models/global_net_V4.dlc",
+                  NULL);
+    g_object_set (gst_data->facefeatureextractor,
+                  "model", "/sdcard/Models/V7.0.1_face_rec.dlc",
+                  NULL);
+    g_object_set (gst_data->facedetector,
+                  "hw-to-run", "CPU",
+                  NULL);
+    g_object_set (gst_data->landmarksdetector,
+                  "hw-to-run", "CPU",
+                  NULL);
+    g_object_set (gst_data->facefeatureextractor,
+                  "hw-to-run", "GPU",
+                  NULL);
 
 
     gst_bin_add_many(GST_BIN(gst_data->pipeline),
                      gst_data->source_sink,
                      gst_data->video_sink,
+                     gst_data->facedetector,
                      gst_data->videoconverter1,
+                     gst_data->anvcvdraw,
+                     gst_data->tee,
+                     gst_data->queue1,
+                     gst_data->queue2,
+                     gst_data->queue3,
+                     gst_data->landmarksdetector,
+                     gst_data->alignment,
+                     gst_data->liveness,
+                     gst_data->facefeatureextractor,
+                     gst_data->fakesink,
                      NULL);
 
     gst_element_link_many(gst_data->source_sink,
                           gst_data->videoconverter1,
+                          gst_data->facedetector,
+                          gst_data->liveness,
+                          gst_data->tee,
+                          NULL);
+
+
+    gst_element_link_many(gst_data->tee,
+                          //gst_data->queue1,
+                          gst_data->landmarksdetector,
+                          gst_data->alignment,
+                          gst_data->facefeatureextractor,
+                          gst_data->fakesink,
+                          NULL);
+    gst_element_link_many(gst_data->tee,
+                          gst_data->queue3,
+                          gst_data->anvcvdraw,
                           gst_data->video_sink,
+                          NULL);
+
+    gst_element_link_many(gst_data->tee,
+                          gst_data->queue2,
+                          gst_data->appsink,
                           NULL);
 
     if(gst_data->native_window)
@@ -257,7 +391,17 @@ static void *app_function(void *userdata)
     gst_element_set_state(gst_data->pipeline, GST_STATE_NULL);
     gst_object_unref(gst_data->source_sink);
     gst_object_unref(gst_data->video_sink);
+    gst_object_unref(gst_data->facedetector);
     gst_object_unref(gst_data->videoconverter1);
+    gst_object_unref(gst_data->anvcvdraw);
+    gst_object_unref(gst_data->landmarksdetector);
+    gst_object_unref(gst_data->alignment);
+    gst_object_unref(gst_data->facefeatureextractor);
+    gst_object_unref(gst_data->anvcvdraw);
+    gst_object_unref(gst_data->queue1);
+    gst_object_unref(gst_data->queue2);
+    gst_object_unref(gst_data->queue3);
+    gst_object_unref(gst_data->liveness);
     gst_object_unref(gst_data->pipeline);
 
     return NULL;
