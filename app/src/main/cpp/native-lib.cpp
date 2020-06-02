@@ -193,24 +193,34 @@ static void *app_function(void *userdata)
     context = g_main_context_new();
 
     gst_data->pipeline = gst_pipeline_new("detector_pipeline");
-    gst_data->videoconverter1 = gst_element_factory_make("videoconvert", "videoconvert1");
+
     gst_data->source_sink = gst_element_factory_make("astrasrc", "astrasrc");
     if(gst_data->source_sink) {
-        LOGD("astrasrc src is created");
+        LOGD("astra src is created");
     }
     else {
-        LOGD("astrasrc src not created");
+        LOGD("astra src not created");
     }
     gst_data->video_sink = gst_element_factory_make("glimagesink", "vsink");
-
-    gst_data->facedetector = gst_element_factory_make("anvfdsnpe", "anvfdsnpe");
-    if(gst_data->facedetector) {
-        LOGD("facedetector is created");
+    gst_data->appsink = gst_element_factory_make("appsink", "appsink");
+    if(gst_data->appsink) {
+        LOGD("appsink src is created");
     }
     else {
-        LOGD("facedetector not created");
+        LOGD("appsink src is not created");
     }
-
+    gst_data->fakesink = gst_element_factory_make("fakesink", "fakesink");
+    gst_data->queue1 = gst_element_factory_make("queue", "queue1");
+    if(gst_data->queue1) {
+        LOGD("Queue src is created");
+    }
+    else {
+        LOGD("Queue src is not created");
+    }
+    gst_data->queue2 = gst_element_factory_make("queue", "queue2");
+    gst_data->queue3 = gst_element_factory_make("queue", "queue3");
+    gst_data->tee = gst_element_factory_make("tee", "tee");
+    gst_data->videoconverter1 = gst_element_factory_make("videoconvert", "videoconvert1");
     gst_data->anvcvdraw = gst_element_factory_make("anvcvdraw", "anvcvdraw");
     if(gst_data->anvcvdraw) {
         LOGD("Draw src is created");
@@ -218,6 +228,22 @@ static void *app_function(void *userdata)
     else {
         LOGD("Draw src is not created");
     }
+    gst_data->facedetector =  gst_element_factory_make("anvfdsnpe", "anvfdsnpe");
+    if(gst_data->facedetector) {
+        LOGD("Face detector src is created");
+    }
+    else {
+        LOGD("Face detector src is not created");
+    }
+
+    gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
+    if(gst_data->liveness) {
+        LOGD("Liveness is created");
+    }
+    else {
+        LOGD("Liveness is not created");
+    }
+
     gst_data->landmarksdetector =  gst_element_factory_make("anvldsnpe", "anvldsnpe");
     if(gst_data->landmarksdetector) {
         LOGD("Landmarks detector src is created");
@@ -241,17 +267,6 @@ static void *app_function(void *userdata)
         LOGD("Face feature extractor src is not created");
     }
 
-    gst_data->tee = gst_element_factory_make("tee", "tee");
-    gst_data->queue1 = gst_element_factory_make("queue", "queue1");
-    if(gst_data->queue1) {
-        LOGD("Queue src is created");
-    }
-    else {
-        LOGD("Queue src is not created");
-    }
-    gst_data->queue2 = gst_element_factory_make("queue", "queue2");
-    gst_data->queue3 = gst_element_factory_make("queue", "queue3");
-
     gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
     if(gst_data->liveness) {
         LOGD("Liveness src is created");
@@ -260,10 +275,12 @@ static void *app_function(void *userdata)
         LOGD("Liveness src is not created");
     }
 
-    g_object_set (gst_data->video_sink,
-                  "sync", false,
+    g_object_set (gst_data->liveness,
+                  "hog-file-path", "/sdcard/Models/hog.xml",
                   NULL);
-
+    g_object_set (gst_data->liveness,
+                  "ann-file-path-prefix", "/sdcard/Models/ann",
+                  NULL);
     g_object_set (gst_data->queue1,
                   "max-size-buffers", 1,
                   NULL);
@@ -275,13 +292,6 @@ static void *app_function(void *userdata)
                   NULL);
     g_object_set (gst_data->facedetector,
                   "min-obj-size", 48,
-                  NULL);
-
-    g_object_set (gst_data->liveness,
-                  "hog-file-path", "/sdcard/Models/hog.xml",
-                  NULL);
-    g_object_set (gst_data->liveness,
-                  "ann-file-path-prefix", "/sdcard/Models/ann",
                   NULL);
 
     g_object_set (gst_data->landmarksdetector,
@@ -297,25 +307,33 @@ static void *app_function(void *userdata)
                   "hw-to-run", "CPU",
                   NULL);
     g_object_set (gst_data->facefeatureextractor,
-                  "hw-to-run", "GPU",
+                  "hw-to-run", "DSP",
+                  NULL);
+    g_object_set (gst_data->video_sink,
+                  "sync", false,
                   NULL);
 
 
+
+    g_object_set (gst_data->appsink, "emit-signals", TRUE, "sync", TRUE, NULL);
+    //g_signal_connect (gst_data->appsink, "new-sample", G_CALLBACK (new_sample), &gst_data);
+
     gst_bin_add_many(GST_BIN(gst_data->pipeline),
                      gst_data->source_sink,
-                     gst_data->video_sink,
-                     gst_data->facedetector,
-                     gst_data->videoconverter1,
-                     gst_data->anvcvdraw,
+                     //gst_data->appsink,
                      gst_data->tee,
                      gst_data->queue1,
+                     gst_data->videoconverter1,
                      gst_data->queue2,
+                     gst_data->facedetector,
+                     gst_data->liveness,
                      gst_data->queue3,
                      gst_data->landmarksdetector,
                      gst_data->alignment,
-                     gst_data->liveness,
-                     gst_data->facefeatureextractor,
                      gst_data->fakesink,
+                     gst_data->facefeatureextractor,
+                     gst_data->anvcvdraw,
+                     gst_data->video_sink,
                      NULL);
 
     gst_element_link_many(gst_data->source_sink,
@@ -323,11 +341,11 @@ static void *app_function(void *userdata)
                           gst_data->facedetector,
                           gst_data->liveness,
                           gst_data->tee,
+
                           NULL);
 
-
     gst_element_link_many(gst_data->tee,
-                          //gst_data->queue1,
+                          gst_data->queue1,
                           gst_data->landmarksdetector,
                           gst_data->alignment,
                           gst_data->facefeatureextractor,
@@ -339,10 +357,10 @@ static void *app_function(void *userdata)
                           gst_data->video_sink,
                           NULL);
 
-    gst_element_link_many(gst_data->tee,
+    /*gst_element_link_many(gst_data->tee,
                           gst_data->queue2,
                           gst_data->appsink,
-                          NULL);
+                          NULL);*/
 
     if(gst_data->native_window)
     {
@@ -389,11 +407,11 @@ static void *app_function(void *userdata)
 
     g_main_context_unref(context);
     gst_element_set_state(gst_data->pipeline, GST_STATE_NULL);
-    gst_object_unref(gst_data->source_sink);
     gst_object_unref(gst_data->video_sink);
-    gst_object_unref(gst_data->facedetector);
+    gst_object_unref(gst_data->appsink);
     gst_object_unref(gst_data->videoconverter1);
-    gst_object_unref(gst_data->anvcvdraw);
+    gst_object_unref(gst_data->facedetector);
+    gst_object_unref(gst_data->liveness);
     gst_object_unref(gst_data->landmarksdetector);
     gst_object_unref(gst_data->alignment);
     gst_object_unref(gst_data->facefeatureextractor);
@@ -401,7 +419,7 @@ static void *app_function(void *userdata)
     gst_object_unref(gst_data->queue1);
     gst_object_unref(gst_data->queue2);
     gst_object_unref(gst_data->queue3);
-    gst_object_unref(gst_data->liveness);
+    gst_object_unref(gst_data->source_sink);
     gst_object_unref(gst_data->pipeline);
 
     return NULL;
