@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
+import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -174,4 +175,17 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
         }
     }
 
+    private fun onDrawBox(x1: Float, y1: Float, x2: Float, y2: Float) {
+        Log.i("GStreamer", "Drawing x1 $x1")
+        Log.i("GStreamer", "Drawing y1 $y1")
+        Log.i("GStreamer", "Drawing x2 $x2")
+        Log.i("GStreamer", "Drawing y2 $y2")
+        //view.clearBox()
+        //view.setBox(x1, y1, x2, y2)
+    }
+
+    private fun onClearBox() {
+        Log.i("GStreamer", "Clearing bounding box")
+        //view.clearBox()
+    }
 }

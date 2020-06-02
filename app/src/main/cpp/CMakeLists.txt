@@ -15,6 +15,7 @@ include_directories(
         ${GSTREAMER_ROOT}/include/gstreamer-1.0
         ${GSTREAMER_ROOT}/include/glib-2.0
         ${GSTREAMER_ROOT}/lib/glib-2.0/include
+        /Users/alexvainshtein/Android/gstreamer-android/android-tutorial-5/jni/meta/MetaFace
 )
 
 include_directories(/Users/alexvainshtein/Downloads/AstraSDK-v2.1.0-9bced77c41-Linux-arm/AstraSDK-v2.1.0-9bced77c41-20200316T022223Z-Linux-aarch64/include)
@@ -44,7 +45,10 @@ add_library(liborbbec SHARED IMPORTED)
 set_target_properties(liborbbec PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/liborbbec.so)
 add_library(libusb SHARED IMPORTED)
 set_target_properties(libusb PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libusb-1.0.9.so)
-
+add_library(gstfacemetaanv SHARED IMPORTED )
+set_target_properties( gstfacemetaanv
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libgstfacemetaanv.so)
 add_library( # Sets the name of the library.
         native-lib
 
@@ -92,4 +96,5 @@ target_link_libraries( # Specifies the target library.
         libusb
         lib_opencv
         libgstreamer_android
+        gstfacemetaanv
         ${android-lib} ${gl-lib})

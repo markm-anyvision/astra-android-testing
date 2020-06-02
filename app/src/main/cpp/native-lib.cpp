@@ -14,6 +14,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <pthread.h>
+#include <GstFaceMetaAnv.h>
 
 #define TAG "CCode"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    TAG, __VA_ARGS__)
@@ -70,7 +71,37 @@ static JavaVM *java_vm;
 static jfieldID custom_data_field_id;
 static jmethodID set_message_method_id;
 static jmethodID on_gstreamer_initialized_method_id;
+static jmethodID on_draw_box_method_id;
+static jmethodID on_clear_box_method_id;
+static jobject appTest;
 
+struct BoundingBox
+{
+    BoundingBox() = default;
+    explicit BoundingBox(const float v[5])
+    {
+        x1 = v[0];
+        y1 = v[1];
+        x2 = v[2];
+        y2 = v[3];
+        score = v[4];
+        class_id = v[5];
+    }
+
+    BoundingBox(float x1, float y1, float x2, float y2, float score, float class_id = 0)
+            : x1(x1), y1(y1), x2(x2), y2(y2), score(score), class_id(class_id)
+    {
+    }
+
+    float x1;
+    float y1;
+    float x2;
+    float y2;
+    float score;
+    float class_id;
+};
+
+constexpr int size_boundingbox = sizeof(BoundingBox) / sizeof(float);
 
 static JNIEnv *attach_current_thread(void)
 {
@@ -174,6 +205,55 @@ static void check_initialization_complete (CustomData *data) {
         }
         data->initialized = TRUE;
     }
+}
+
+/* The appsink has received a buffer */
+static GstFlowReturn new_sample (GstElement *sink, _CustomData *data) {
+
+    GST_DEBUG ("Created GlobalRef for app object at new_sample %p", appTest);
+    GstSample *sample;
+    FaceMetaAnv* meta;
+    std::vector<BoundingBox*> myBbox;
+    /* Retrieve the buffer */
+    g_signal_emit_by_name (sink, "pull-sample", &sample);
+    if (sample) {
+        GstBuffer* buffer = gst_sample_get_buffer(sample);
+        meta = GST_FACE_META_ANV_GET(buffer);
+        if(meta) {
+            //LOGD("There metadata, number of boxes: %d", meta->info.num_dets);
+
+            for (size_t i = 0; i < meta->info.num_dets; ++i) {
+                myBbox.emplace_back(
+                        reinterpret_cast<BoundingBox *>(meta->info.bboxes + i * size_boundingbox));
+            }
+
+            LOGD("There metadata, number of boxes: %d", myBbox.size());
+            JNIEnv *env = get_jni_env();
+            if (!myBbox.empty() ) {
+                env->CallVoidMethod(appTest,
+                                    on_draw_box_method_id, myBbox.at(0)->x1, myBbox.at(0)->y1,
+                                    myBbox.at(0)->x2, myBbox.at(0)->y2);
+            }
+            else {
+                JNIEnv *env = get_jni_env();
+                env->CallVoidMethod(appTest,
+                                    on_clear_box_method_id);
+            }
+
+        }
+        else {
+            LOGD("No metadata");
+            JNIEnv *env = get_jni_env();
+            env->CallVoidMethod(appTest,
+                                on_clear_box_method_id);
+        }
+        /* The only thing we do in this example is print a * to indicate a received buffer */
+        LOGD("Appsink received");
+        gst_sample_unref (sample);
+        return GST_FLOW_OK;
+    }
+
+    return GST_FLOW_ERROR;
 }
 
 static void eos_cb(GstBus const *bus, GstMessage const *msg, CustomData *jni_data)
@@ -316,11 +396,11 @@ static void *app_function(void *userdata)
 
 
     g_object_set (gst_data->appsink, "emit-signals", TRUE, "sync", TRUE, NULL);
-    //g_signal_connect (gst_data->appsink, "new-sample", G_CALLBACK (new_sample), &gst_data);
+    g_signal_connect (gst_data->appsink, "new-sample", G_CALLBACK (new_sample), &gst_data);
 
     gst_bin_add_many(GST_BIN(gst_data->pipeline),
                      gst_data->source_sink,
-                     //gst_data->appsink,
+                     gst_data->appsink,
                      gst_data->tee,
                      gst_data->queue1,
                      gst_data->videoconverter1,
@@ -357,10 +437,10 @@ static void *app_function(void *userdata)
                           gst_data->video_sink,
                           NULL);
 
-    /*gst_element_link_many(gst_data->tee,
+    gst_element_link_many(gst_data->tee,
                           gst_data->queue2,
                           gst_data->appsink,
-                          NULL);*/
+                          NULL);
 
     if(gst_data->native_window)
     {
@@ -437,6 +517,7 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
     gst_debug_set_threshold_for_name("Astra", GST_LEVEL_DEBUG);
     GST_DEBUG ("Created CustomData at %p", data);
     data->app = env->NewGlobalRef (thiz);
+    appTest = data->app;
     GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
     pthread_create (&gst_app_thread, NULL, &app_function, data);
 }
@@ -477,7 +558,10 @@ static void gst_native_pause (JNIEnv* env, jobject thiz) {
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
     custom_data_field_id = env->GetFieldID (klass, "native_custom_data", "J");
     on_gstreamer_initialized_method_id = env->GetMethodID (klass, "onGStreamerInitialized", "()V");
-
+    on_draw_box_method_id =
+            env->GetMethodID(klass, "onDrawBox", "(FFFF)V");
+    on_clear_box_method_id =
+            env->GetMethodID(klass, "onClearBox", "()V");
     if (!custom_data_field_id || !set_message_method_id || !on_gstreamer_initialized_method_id) {
         /* We emit this message through the Android log instead of the GStreamer log because the later
          * has not been initialized yet.
@@ -539,6 +623,8 @@ void gst_native_surface_finalize(JNIEnv * env, jobject thiz)
     gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(gst_data->video_sink),
                                         (guintptr)NULL);
 }
+
+
 
 /* List of implemented native methods */
 static JNINativeMethod native_methods[] = {
