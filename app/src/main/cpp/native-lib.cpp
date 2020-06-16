@@ -14,7 +14,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <pthread.h>
-#include <GstFaceMetaAnv.h>
+#include <gstanvfacemeta.h>
 
 #define TAG "CCode"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    TAG, __VA_ARGS__)
@@ -61,7 +61,7 @@ typedef struct _CustomData {
     GstElement *queue2;
     GstElement *queue3;
     GstElement *tee;
-    GstElement *liveness;
+    //GstElement *liveness;
 } CustomData;
 
 /* These global variables cache values which are not changing during execution */
@@ -212,7 +212,7 @@ static GstFlowReturn new_sample (GstElement *sink, _CustomData *data) {
 
     GST_DEBUG ("Created GlobalRef for app object at new_sample %p", appTest);
     GstSample *sample;
-    FaceMetaAnv* meta;
+    GstAnvFaceRecMeta* meta;
     std::vector<BoundingBox*> myBbox;
     /* Retrieve the buffer */
     g_signal_emit_by_name (sink, "pull-sample", &sample);
@@ -222,9 +222,9 @@ static GstFlowReturn new_sample (GstElement *sink, _CustomData *data) {
         if(meta) {
             //LOGD("There metadata, number of boxes: %d", meta->info.num_dets);
 
-            for (size_t i = 0; i < meta->info.num_dets; ++i) {
+            for (size_t i = 0; i < meta->data->num_dets; ++i) {
                 myBbox.emplace_back(
-                        reinterpret_cast<BoundingBox *>(meta->info.bboxes + i * size_boundingbox));
+                        reinterpret_cast<BoundingBox *>(meta->data->bboxes + i * size_boundingbox));
             }
 
             LOGD("There metadata, number of boxes: %d", myBbox.size());
@@ -316,13 +316,13 @@ static void *app_function(void *userdata)
         LOGD("Face detector src is not created");
     }
 
-    gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
+    /*gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
     if(gst_data->liveness) {
         LOGD("Liveness is created");
     }
     else {
         LOGD("Liveness is not created");
-    }
+    }*/
 
     gst_data->landmarksdetector =  gst_element_factory_make("anvldsnpe", "anvldsnpe");
     if(gst_data->landmarksdetector) {
@@ -347,7 +347,7 @@ static void *app_function(void *userdata)
         LOGD("Face feature extractor src is not created");
     }
 
-    gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
+    /*gst_data->liveness =  gst_element_factory_make("anvliveness", "anvliveness");
     if(gst_data->liveness) {
         LOGD("Liveness src is created");
     }
@@ -360,7 +360,7 @@ static void *app_function(void *userdata)
                   NULL);
     g_object_set (gst_data->liveness,
                   "ann-file-path-prefix", "/sdcard/Models/ann",
-                  NULL);
+                  NULL);*/
     g_object_set (gst_data->queue1,
                   "max-size-buffers", 1,
                   NULL);
@@ -406,7 +406,7 @@ static void *app_function(void *userdata)
                      gst_data->videoconverter1,
                      gst_data->queue2,
                      gst_data->facedetector,
-                     gst_data->liveness,
+                     //gst_data->liveness,
                      gst_data->queue3,
                      gst_data->landmarksdetector,
                      gst_data->alignment,
@@ -419,7 +419,7 @@ static void *app_function(void *userdata)
     gst_element_link_many(gst_data->source_sink,
                           gst_data->videoconverter1,
                           gst_data->facedetector,
-                          gst_data->liveness,
+                          //gst_data->liveness,
                           gst_data->tee,
 
                           NULL);
@@ -491,7 +491,7 @@ static void *app_function(void *userdata)
     gst_object_unref(gst_data->appsink);
     gst_object_unref(gst_data->videoconverter1);
     gst_object_unref(gst_data->facedetector);
-    gst_object_unref(gst_data->liveness);
+    //gst_object_unref(gst_data->liveness);
     gst_object_unref(gst_data->landmarksdetector);
     gst_object_unref(gst_data->alignment);
     gst_object_unref(gst_data->facefeatureextractor);

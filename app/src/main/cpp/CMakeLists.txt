@@ -15,7 +15,7 @@ include_directories(
         ${GSTREAMER_ROOT}/include/gstreamer-1.0
         ${GSTREAMER_ROOT}/include/glib-2.0
         ${GSTREAMER_ROOT}/lib/glib-2.0/include
-        /Users/alexvainshtein/Android/gstreamer-android/android-tutorial-5/jni/meta/MetaFace
+        /Users/alexvainshtein/Projects/gst_anv/gst-libs/common
 )
 
 include_directories(/Users/alexvainshtein/Downloads/AstraSDK-v2.1.0-9bced77c41-Linux-arm/AstraSDK-v2.1.0-9bced77c41-20200316T022223Z-Linux-aarch64/include)
@@ -35,14 +35,6 @@ add_library(libastra_jni SHARED IMPORTED)
 set_target_properties(libastra_jni PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra_jni.so)
 add_library(libastra SHARED IMPORTED)
 set_target_properties(libastra PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra.so)
-add_library(libOniFile SHARED IMPORTED)
-set_target_properties(libOniFile PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libOniFile.so)
-add_library(libOpenNI2 SHARED IMPORTED)
-set_target_properties(libOpenNI2 PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libOpenNI2.so)
-add_library(libopenni_sensor SHARED IMPORTED)
-set_target_properties(libopenni_sensor PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libopenni_sensor.so)
-add_library(liborbbec SHARED IMPORTED)
-set_target_properties(liborbbec PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/liborbbec.so)
 add_library(libusb SHARED IMPORTED)
 set_target_properties(libusb PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libusb-1.0.9.so)
 add_library(gstfacemetaanv SHARED IMPORTED )
@@ -89,10 +81,6 @@ target_link_libraries( # Specifies the target library.
         libastra_core
         libastra_jni
         libastra
-        libOniFile
-        libOpenNI2
-        libopenni_sensor
-        liborbbec
         libusb
         lib_opencv
         libgstreamer_android
