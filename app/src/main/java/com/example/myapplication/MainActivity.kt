@@ -24,26 +24,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
     private var aac: AstraAndroidContext? = null
     private var executor: ExecutorService? = null
 
-
-
-    private val runnable = Runnable {
-        try {
-            try {
-                GStreamer.init(this)
-            } catch (e: Exception) {
-                Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
-                finish()
-            }
-            startGstreamer()
-            val sh = surfaceView.holder
-            sh.addCallback(this)
-            nativeInit();
-        }
-        catch (e: Exception) {
-
-        }
-        //openAstraStream()
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -80,10 +60,6 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener, SurfaceHo
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    private external fun openAstraStream()
-    private external fun startGstreamer()
-    private external fun stopDepthStream()
-
     private external fun nativeInit() // Initialize native code, build pipeline, etc
     private external fun nativeFinalize() // Destroy pipeline and shutdown native code
     private external fun nativePlay() // Set pipeline to PLAYING

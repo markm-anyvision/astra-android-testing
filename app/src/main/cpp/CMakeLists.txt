@@ -25,18 +25,6 @@ add_library(lib_opencv SHARED IMPORTED)
 set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libopencv_java4.so)
 add_library(libgstreamer_android SHARED IMPORTED)
 set_target_properties(libgstreamer_android PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libgstreamer_android.so)
-add_library(libastra_android_bridge SHARED IMPORTED)
-set_target_properties(libastra_android_bridge PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra_android_bridge.so)
-add_library(libastra_core_api SHARED IMPORTED)
-set_target_properties(libastra_core_api PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra_core_api.so)
-add_library(libastra_core SHARED IMPORTED)
-set_target_properties(libastra_core PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra_core.so)
-add_library(libastra_jni SHARED IMPORTED)
-set_target_properties(libastra_jni PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra_jni.so)
-add_library(libastra SHARED IMPORTED)
-set_target_properties(libastra PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libastra.so)
-add_library(libusb SHARED IMPORTED)
-set_target_properties(libusb PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a/libusb-1.0.9.so)
 add_library(gstfacemetaanv SHARED IMPORTED )
 set_target_properties( gstfacemetaanv
         PROPERTIES IMPORTED_LOCATION
@@ -63,8 +51,6 @@ find_library( # Sets the name of the path variable.
         # you want CMake to locate.
         log)
 
-#find_library( camera-lib camera2ndk )
-#find_library( media-lib mediandk )
 find_library( android-lib android )
 find_library( gl-lib GLESv2 )
 
@@ -76,12 +62,6 @@ find_library( gl-lib GLESv2 )
 target_link_libraries( # Specifies the target library.
         native-lib
         ${log-lib}
-        libastra_android_bridge
-        libastra_core_api
-        libastra_core
-        libastra_jni
-        libastra
-        libusb
         lib_opencv
         libgstreamer_android
         gstfacemetaanv
