@@ -59,7 +59,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation(name: 'astra-android-release-v2.1.0-arm64-v8a', ext: 'aar')
+    implementation(name: 'astra-android-release-v2.1.1-arm64-v8a', ext: 'aar')
     /*implementation(name: 'libuvccamera-release', ext: 'aar')
     implementation(name: 'usbCameraCommon-release', ext: 'aar')
     implementation("com.serenegiant:common:2.12.4") {

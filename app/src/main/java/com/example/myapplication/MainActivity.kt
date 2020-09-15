@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_main.*
 import android.hardware.usb.UsbDevice
+import com.orbbec.astra.StreamSet
 import com.orbbec.astra.android.AstraAndroidContext
 import com.orbbec.astra.android.AstraDeviceManagerListener
 import java.lang.Exception
@@ -16,6 +17,10 @@ class MainActivity : AppCompatActivity() , AstraDeviceManagerListener {
 
     private val runnable = Runnable {
         try {
+            val streamSet = StreamSet.open()
+            val deviceController = streamSet.createDeviceController()
+            deviceController.enableLdp(false)
+            deviceController.enableLaser(false)
             openAstraStream()
         }
         catch (e: Exception) {

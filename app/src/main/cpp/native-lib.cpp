@@ -12,6 +12,10 @@
 
 #define TAG "CCode"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    TAG, __VA_ARGS__)
+
+
+using namespace std::chrono;
+
 int a=0;
 bool isRunning = true;
 
@@ -24,6 +28,9 @@ public:
 
     virtual void on_frame_ready(astra::StreamReader &reader, astra::Frame &frame) override {
         LOGD("Frame ready");
+        if(!frame.is_valid()) {
+            LOGD("Frame is not valid");
+        }
         const astra::ColorFrame colorFrame = frame.get<astra::ColorFrame>();
 
         int width = colorFrame.width();
@@ -32,24 +39,30 @@ public:
 
         cv::Mat rgb(height, width, CV_8UC3, (uint8_t *) colorFrame.data());
         cv::cvtColor(rgb, rgb, cv::COLOR_BGRA2RGB);
-        /*if (a % 50 == 0) {
+        milliseconds ms = duration_cast< milliseconds >(
+                system_clock::now().time_since_epoch()
+        );
+        if (a % 10 == 0) {
             LOGD("Saving image");
-            cv::imwrite("/storage/self/primary/Download/" + std::to_string(a) + "_rgb.png", rgb);
+            cv::imwrite("/storage/self/primary/Download/" + std::to_string(ms.count()) + "_rgb.png", rgb);
             rgb.release();
-        }*/
+        }
         const astra::DepthFrame depthFrame = frame.get<astra::DepthFrame>();
+        if(!depthFrame.is_valid()) {
+            LOGD("Depth Frame is not valid");
+        }
         int depthHeight = depthFrame.height();
         LOGD("Depth Height: %d", depthHeight);
 
-        /*if (a % 50 == 0) {
+        if (a % 10 == 0) {
             cv::Mat image(400, width, CV_16UC1, (uint16_t *) depthFrame.data());
             image.convertTo(image, CV_8U, 256.0 / m_depthMaxValue);
             std::vector<int> compression_params;
             compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
             compression_params.push_back(0);
-            cv::imwrite("/storage/self/primary/Download/" + std::to_string(a) + "_depth.png", image,
+            cv::imwrite("/storage/self/primary/Download/" + std::to_string(ms.count()) + "_depth.png", image,
                         compression_params);
-        }*/
+        }
         a++;
 
     }
@@ -78,7 +91,6 @@ Java_com_example_myapplication_MainActivity_openAstraStream(
 
     AstraFrameListener listener;
     reader.add_listener(listener);
-
     while (isRunning) {
         astra_update();
     }
